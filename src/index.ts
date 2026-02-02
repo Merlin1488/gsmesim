@@ -30,8 +30,16 @@ async function sendTelegramMessage(botToken: string, chatId: number, text: strin
 		body: JSON.stringify({
 			chat_id: chatId,
 			text: text,
+			parse_mode: 'HTML',
 		}),
 	});
+	
+	if (!response.ok) {
+		const errorData = await response.json();
+		console.error('Telegram API error:', errorData);
+		throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
+	}
+	
 	return response.json();
 }
 
@@ -54,8 +62,43 @@ export default {
 						return new Response('Bot token not configured', { status: 500 });
 					}
 
-					// Format the message to echo back
-					const echoMessage = `Received message:\n\n${update.message.text || '(no text)'}\n\n---\n\nFull request body:\n\`\`\`json\n${body}\n\`\`\``;
+					// Sanitize and format the message to echo back
+					const receivedText = update.message.text || '(no text)';
+					
+					// Create a sanitized version of the request body
+					const parsedBody = JSON.parse(body);
+					const sanitizedBody = {
+						update_id: parsedBody.update_id,
+						message: {
+							message_id: parsedBody.message?.message_id,
+							from: {
+								first_name: parsedBody.message?.from?.first_name,
+								username: parsedBody.message?.from?.username,
+								is_bot: parsedBody.message?.from?.is_bot,
+							},
+							chat: {
+								id: parsedBody.message?.chat?.id,
+								type: parsedBody.message?.chat?.type,
+								title: parsedBody.message?.chat?.title,
+							},
+							date: parsedBody.message?.date,
+							text: parsedBody.message?.text,
+						},
+					};
+					
+					const sanitizedBodyStr = JSON.stringify(sanitizedBody, null, 2);
+					
+					// Escape HTML special characters for safe display
+					const escapeHtml = (text: string) => 
+						text.replace(/&/g, '&amp;')
+							.replace(/</g, '&lt;')
+							.replace(/>/g, '&gt;');
+					
+					// Format with HTML
+					const echoMessage = 
+						`<b>Received message:</b>\n\n${escapeHtml(receivedText)}\n\n` +
+						`<b>───────────────</b>\n\n` +
+						`<b>Full request body:</b>\n<pre>${escapeHtml(sanitizedBodyStr)}</pre>`;
 
 					// Send the message back to the chat
 					await sendTelegramMessage(botToken, chatId, echoMessage);

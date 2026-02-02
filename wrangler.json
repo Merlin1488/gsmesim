@@ -12,8 +12,5 @@
 	],
 	"observability": {
 		"enabled": true
-	},
-	"vars": {
-		"TELEGRAM_BOT_TOKEN": ""
 	}
 }

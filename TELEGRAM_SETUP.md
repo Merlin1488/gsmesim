@@ -15,32 +15,48 @@ This guide explains how to set up the Telegram bot integration for gsmesim.
 1. Open Telegram and search for [@BotFather](https://t.me/botfather)
 2. Start a chat and send `/newbot`
 3. Follow the instructions to choose a name and username for your bot
-4. BotFather will give you a token that looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
+4. BotFather will give you a token that looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz12345`
 5. Save this token - you'll need it in the next step
 
 ### 2. Configure the Bot Token
 
-You have two options to configure the bot token:
+**Important:** For security, always use Cloudflare Workers secrets to store your bot token, never commit it to your code.
 
-#### Option A: Using wrangler.json (for development)
+#### Option A: Using wrangler CLI (recommended for production)
 
-1. Open `wrangler.json`
-2. Update the `TELEGRAM_BOT_TOKEN` value with your bot token:
-   ```json
-   "vars": {
-     "TELEGRAM_BOT_TOKEN": "YOUR_BOT_TOKEN_HERE"
-   }
-   ```
+Use the wrangler CLI to set the token as a secret:
 
-#### Option B: Using Cloudflare Dashboard (for production, recommended)
+```bash
+echo "YOUR_BOT_TOKEN_HERE" | npx wrangler secret put TELEGRAM_BOT_TOKEN
+```
+
+Or interactively:
+
+```bash
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+# Then paste your token when prompted
+```
+
+#### Option B: Using Cloudflare Dashboard
 
 1. Go to your Cloudflare Workers dashboard
 2. Select your worker (`gsmesim`)
-3. Go to Settings > Variables
-4. Add a new environment variable:
+3. Go to Settings > Variables and Secrets
+4. Click "Add variable" and select "Encrypt"
+5. Add:
    - Variable name: `TELEGRAM_BOT_TOKEN`
    - Value: Your bot token from BotFather
-5. Save the changes
+6. Save the changes
+
+#### Option C: For local development only
+
+Create a `.dev.vars` file in the project root (this file is gitignored):
+
+```
+TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+```
+
+**Note:** Never use `wrangler.json` to store the token as it would be committed to version control.
 
 ### 3. Deploy Your Worker
 
@@ -77,8 +93,11 @@ https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://gsmesim.YOUR
 - It parses the incoming message
 - It echoes back both:
   - The message text that was received
-  - The full JSON request body (formatted)
+  - A sanitized version of the request body (formatted as JSON)
 - All messages are sent back to the same chat where they were received
+- Sensitive data like phone numbers and full user IDs are filtered out for privacy
+
+**Security Note:** The bot only includes basic message information (message text, chat ID, username, etc.) in the echo response. Sensitive fields are excluded to protect user privacy.
 
 ## Troubleshooting
 
