@@ -1,0 +1,16 @@
+{
+	"compatibility_date": "2025-10-08",
+	"main": "src/index.ts",
+	"name": "gsmesim",
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_id": "a3c59d4f-2872-4c5c-8911-64a75c06188b",
+			"database_name": "supgsmesim"
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}
