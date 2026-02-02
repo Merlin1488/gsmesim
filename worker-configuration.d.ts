@@ -7,6 +7,7 @@ declare namespace Cloudflare {
 	}
 	interface Env {
 		DB: D1Database;
+		TELEGRAM_BOT_TOKEN: string;
 	}
 }
 interface Env extends Cloudflare.Env {}
