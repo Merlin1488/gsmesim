@@ -65,24 +65,23 @@ export default {
 					// Sanitize and format the message to echo back
 					const receivedText = update.message.text || '(no text)';
 					
-					// Create a sanitized version of the request body
-					const parsedBody = JSON.parse(body);
+					// Create a sanitized version of the request body (reuse parsed update)
 					const sanitizedBody = {
-						update_id: parsedBody.update_id,
+						update_id: update.update_id,
 						message: {
-							message_id: parsedBody.message?.message_id,
+							message_id: update.message.message_id,
 							from: {
-								first_name: parsedBody.message?.from?.first_name,
-								username: parsedBody.message?.from?.username,
-								is_bot: parsedBody.message?.from?.is_bot,
+								first_name: update.message.from.first_name,
+								username: update.message.from.username,
+								is_bot: update.message.from.is_bot,
 							},
 							chat: {
-								id: parsedBody.message?.chat?.id,
-								type: parsedBody.message?.chat?.type,
-								title: parsedBody.message?.chat?.title,
+								id: update.message.chat.id,
+								type: update.message.chat.type,
+								title: update.message.chat.title,
 							},
-							date: parsedBody.message?.date,
-							text: parsedBody.message?.text,
+							date: update.message.date,
+							text: update.message.text,
 						},
 					};
 					
@@ -92,7 +91,9 @@ export default {
 					const escapeHtml = (text: string) => 
 						text.replace(/&/g, '&amp;')
 							.replace(/</g, '&lt;')
-							.replace(/>/g, '&gt;');
+							.replace(/>/g, '&gt;')
+							.replace(/"/g, '&quot;')
+							.replace(/'/g, '&#x27;');
 					
 					// Format with HTML
 					const echoMessage = 
@@ -106,8 +107,19 @@ export default {
 
 				return new Response('OK', { status: 200 });
 			} catch (error) {
-				console.error('Error processing webhook:', error);
-				return new Response('Error processing webhook', { status: 500 });
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				console.error('Error processing webhook:', {
+					error: errorMessage,
+					stack: error instanceof Error ? error.stack : undefined,
+					type: error instanceof SyntaxError ? 'JSON parsing error' : 'Unknown error type',
+				});
+				
+				// Return appropriate error response
+				if (error instanceof SyntaxError) {
+					return new Response('Invalid JSON payload', { status: 400 });
+				}
+				
+				return new Response(`Error processing webhook: ${errorMessage}`, { status: 500 });
 			}
 		}
 

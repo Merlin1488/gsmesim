@@ -15,7 +15,7 @@ This guide explains how to set up the Telegram bot integration for gsmesim.
 1. Open Telegram and search for [@BotFather](https://t.me/botfather)
 2. Start a chat and send `/newbot`
 3. Follow the instructions to choose a name and username for your bot
-4. BotFather will give you a token that looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz12345`
+4. BotFather will give you a token that looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz-1234567890`
 5. Save this token - you'll need it in the next step
 
 ### 2. Configure the Bot Token
